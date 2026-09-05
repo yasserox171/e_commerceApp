@@ -38,23 +38,36 @@ step()  { printf '\n%s▸ %s%s\n' "$BOLD" "$1" "$RESET"; }
 info()  { printf '  %s%s%s\n' "$DIM" "$1" "$RESET"; }
 warn()  { printf '  %s! %s%s\n' "$YELLOW" "$1" "$RESET"; }
 ok()    { printf '  %s✔ %s%s\n' "$GREEN" "$1" "$RESET"; }
-die()   { printf '\n%s✗ %s%s\n' "$RED" "$1" "$RESET" >&2; exit 1; }
-
 PREVIOUS_COMMIT=''
-on_error() {
-  local line=$1
-  printf '\n%s✗ deploy failed at line %s%s\n' "$RED" "$line" "$RESET" >&2
-  if [ -n "$PREVIOUS_COMMIT" ]; then
-    cat >&2 <<EOF
+# 0 until the checkout has actually moved. Before that a failure has changed
+# nothing, so the recovery advice below would only be noise.
+MOVED=0
+# Flipped once the restart has been issued, which is the point where a failure
+# means the new code is live rather than merely built.
+RESTARTED=0
 
-  The service was NOT restarted unless you saw the restart step succeed, so it
-  is still running the previous code. To put the checkout back as well:
+recovery_hint() {
+  [ "$MOVED" = "1" ] || return 0
+  if [ "$RESTARTED" = "1" ]; then
+    printf '\n  The new code IS running and is not healthy. To go back:\n' >&2
+  else
+    printf '\n  The service was not restarted, so it is still running the previous\n  code. To put the checkout back to match it:\n' >&2
+  fi
+  cat >&2 <<EOF
 
       cd $APP_DIR && git checkout $PREVIOUS_COMMIT && ./deploy/deploy.sh
 
   Logs:  journalctl -u $SERVICE -n 100 --no-pager
 EOF
-  fi
+}
+
+# `die` exits directly, so it never fires the ERR trap — both paths have to ask
+# for the hint themselves.
+die() { printf '\n%s✗ %s%s\n' "$RED" "$1" "$RESET" >&2; recovery_hint; exit 1; }
+
+on_error() {
+  printf '\n%s✗ deploy failed at line %s%s\n' "$RED" "$1" "$RESET" >&2
+  recovery_hint
 }
 trap 'on_error $LINENO' ERR
 
@@ -133,6 +146,7 @@ fi
 # instead of silently discarding whatever the server had.
 git checkout --quiet "$BRANCH" 2>/dev/null || git checkout --quiet -b "$BRANCH" "origin/$BRANCH"
 git merge --ff-only "origin/$BRANCH"
+MOVED=1
 ok "checkout at $(git rev-parse --short HEAD)"
 
 # --- dependencies ------------------------------------------------------------
@@ -181,7 +195,8 @@ if [ "$(id -u)" -ne 0 ]; then
   SYSTEMCTL=(sudo -n systemctl)
 fi
 
-"${SYSTEMCTL[@]}" restart "$SERVICE" || die "systemctl restart failed. Try: journalctl -u $SERVICE -n 50 --no-pager"
+"${SYSTEMCTL[@]}" restart "$SERVICE" || die "systemctl restart failed. Is deploy/sudoers.d/qri3a-deploy installed? See: journalctl -u $SERVICE -n 50 --no-pager"
+RESTARTED=1
 ok "restart issued"
 
 # --- verify ------------------------------------------------------------------
