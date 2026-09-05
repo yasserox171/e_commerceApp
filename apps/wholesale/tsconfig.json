@@ -1,0 +1,21 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "paths": {
+      "@/*": ["./*"]
+    },
+    // `expo/types` augments react-native with `declare module 'react-native' {
+    // interface ViewStyle { … } }` for the web-only style props. That merge only
+    // works against React Native's legacy hand-written types, where ViewStyle is
+    // an interface — under the generated types (where it is a type alias) the
+    // augmentation silently REPLACES ViewStyle with the web-props-only shape and
+    // every layout property stops type-checking. Resolving react-native through
+    // its `react-native-legacy-deep-imports` export condition keeps the two in
+    // agreement.
+    "customConditions": ["react-native-legacy-deep-imports", "react-native"]
+  },
+  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"],
+  "exclude": ["node_modules"]
+}
