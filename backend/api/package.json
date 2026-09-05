@@ -1,0 +1,44 @@
+{
+  "name": "@ecommerce/api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Express + PostgreSQL API serving both the 9ri3a wholesale app and the 9ri3a espress dropshipping app.",
+  "type": "module",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server.js",
+    "migrate": "tsx src/db/migrate.ts up",
+    "migrate:status": "tsx src/db/migrate.ts status",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "tsx --test \"src/**/*.test.ts\""
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "compression": "^1.8.1",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.7.0",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "morgan": "^1.12.0",
+    "pg": "^8.23.0",
+    "zod": "^4.5.4"
+  },
+  "optionalDependencies": {
+    "stripe": "^22.6.1"
+  },
+  "devDependencies": {
+    "@types/compression": "^1.8.1",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/morgan": "^1.9.10",
+    "@types/node": "^26.4.1",
+    "@types/pg": "^8.23.1",
+    "tsx": "^4.23.13",
+    "typescript": "~5.9.2"
+  }
+}
