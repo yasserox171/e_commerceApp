@@ -40,7 +40,11 @@ const config: ExpoConfig = {
 
   web: {
     bundler: 'metro',
-    output: 'static',
+    // 'single' (client-rendered SPA), not 'static': these screens are all
+    // auth-gated and API-driven, so server rendering buys nothing, and the
+    // static renderer pulls react-native/rn-get-polyfills, a subpath RN 0.87
+    // no longer exposes through its exports map.
+    output: 'single',
     favicon: './assets/favicon.png',
   },
 
