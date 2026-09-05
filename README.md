@@ -60,6 +60,28 @@ npm run dropshipping
 
 > **تحقق سريع:** افتح `http://localhost:4000/health` — خاصك تشوف `"database": { "ok": true }`.
 
+### معاينة التصميم فالمتصفح
+
+بغيتي تشوف الشاشات بسرعة بلا جهاز ولا APK؟ التطبيقان كيخدمو على الويب عبر
+React Native Web:
+
+</div>
+
+```bash
+cd apps/wholesale     && npx expo start --web --port 8081
+cd apps/dropshipping  && npx expo start --web --port 8082
+```
+
+<div dir="rtl">
+
+صغّر نافذة المتصفح لحجم هاتف (390×844) باش تشوف التخطيط الحقيقي. الويب هنا
+**للمعاينة فقط** — التوصيل النهائي هو APK. فرقان مهمان:
+
+- الجلسة كتتخزن ف `localStorage` بدل `expo-secure-store` (شوف
+  [`sessionStore.ts`](packages/shared-ui/src/api/sessionStore.ts))
+- `react-native-webview` ما كيخدمش على الويب، يعني صفحة الدفع ديال CMI
+  كتظهر غير على الجهاز
+
 </div>
 
 ---
