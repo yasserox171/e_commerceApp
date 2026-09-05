@@ -77,9 +77,11 @@ const config: ExpoConfig = {
   },
 
   extra: {
-    eas: {
-      projectId: process.env.EAS_PROJECT_ID ?? '',
-    },
+    // Only present once the project is linked. `eas init` writes it here, and
+    // the GitHub Actions APK build does not need it at all.
+    ...(process.env.EAS_PROJECT_ID
+      ? { eas: { projectId: process.env.EAS_PROJECT_ID } }
+      : {}),
   },
 };
 

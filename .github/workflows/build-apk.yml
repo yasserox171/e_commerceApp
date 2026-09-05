@@ -1,0 +1,149 @@
+name: Build Android APK
+
+# Produces an installable APK for each app without an Expo account or a paid EAS
+# plan: `expo prebuild` generates the native Android project and Gradle builds
+# it on a GitHub runner, which already has the Android SDK.
+#
+# Run it from the Actions tab ("Run workflow"), or with:
+#   gh workflow run build-apk.yml -f app=both -f api_url=https://api.your-domain.ma
+#
+# The APKs land as run artifacts — download, then `adb install` or copy to a
+# phone and open.
+
+on:
+  workflow_dispatch:
+    inputs:
+      app:
+        description: Which app to build
+        type: choice
+        default: both
+        options: [both, wholesale, dropshipping]
+      api_url:
+        description: >-
+          Base URL of @ecommerce/api, baked into the APK. Must be reachable from
+          the phone — a plain http:// address only works on the same LAN.
+        type: string
+        default: https://api.example.com
+      build_type:
+        description: release (installable, signed with the debug key) or debug
+        type: choice
+        default: release
+        options: [release, debug]
+
+  # Building on every push would burn minutes for no reason; this fires only
+  # when the workflow itself changes, so a change here is verified once.
+  push:
+    branches: ['**']
+    paths: ['.github/workflows/build-apk.yml']
+
+concurrency:
+  group: apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: ${{ matrix.app }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    strategy:
+      fail-fast: false
+      matrix:
+        app: ${{ (github.event.inputs.app == 'wholesale' && fromJSON('["wholesale"]'))
+              || (github.event.inputs.app == 'dropshipping' && fromJSON('["dropshipping"]'))
+              || fromJSON('["wholesale","dropshipping"]') }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # React Native 0.87 / AGP 8 want JDK 17. The runner also has 21, which
+      # Gradle's Kotlin toolchain is not happy with here.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate the native Android project
+        working-directory: apps/${{ matrix.app }}
+        env:
+          CI: '1'
+          # Inlined into the JS bundle by Metro during the Gradle build, so it
+          # has to be set before prebuild rather than after.
+          EXPO_PUBLIC_API_URL: ${{ github.event.inputs.api_url || 'https://api.example.com' }}
+        run: npx expo prebuild --platform android --no-install --clean
+
+      - name: Give Gradle enough heap
+        working-directory: apps/${{ matrix.app }}/android
+        run: |
+          {
+            echo "org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g"
+            echo "org.gradle.parallel=true"
+          } >> gradle.properties
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ matrix.app }}-${{ hashFiles('apps/*/package.json', 'package-lock.json') }}
+          restore-keys: gradle-${{ matrix.app }}-
+
+      - name: Build the APK
+        working-directory: apps/${{ matrix.app }}/android
+        env:
+          EXPO_PUBLIC_API_URL: ${{ github.event.inputs.api_url || 'https://api.example.com' }}
+        run: |
+          set -euo pipefail
+          TASK=$([ "${{ github.event.inputs.build_type || 'release' }}" = "debug" ] && echo assembleDebug || echo assembleRelease)
+          echo "▸ running $TASK"
+          ./gradlew "$TASK" --no-daemon --stacktrace
+
+      - name: Name the artifact
+        id: apk
+        working-directory: apps/${{ matrix.app }}
+        run: |
+          set -euo pipefail
+          FOUND=$(find android/app/build/outputs/apk -name '*.apk' | head -1)
+          if [ -z "$FOUND" ]; then
+            echo "no APK produced" >&2
+            find android/app/build/outputs -type f | head -40 >&2
+            exit 1
+          fi
+          VERSION=$(node -p "require('./package.json').version")
+          NAME="9ri3a-${{ matrix.app }}-v${VERSION}-${GITHUB_SHA::7}.apk"
+          cp "$FOUND" "$NAME"
+          echo "path=apps/${{ matrix.app }}/$NAME" >> "$GITHUB_OUTPUT"
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+          ls -lh "$NAME"
+
+      - name: Upload the APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.apk.outputs.name }}
+          path: ${{ steps.apk.outputs.path }}
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### ${{ matrix.app }}"
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| APK | \`${{ steps.apk.outputs.name }}\` |"
+            echo "| API URL baked in | \`${{ github.event.inputs.api_url || 'https://api.example.com' }}\` |"
+            echo "| Build type | \`${{ github.event.inputs.build_type || 'release' }}\` |"
+            echo ""
+            echo "Signed with the debug key — installable for testing, **not** publishable to Google Play."
+          } >> "$GITHUB_STEP_SUMMARY"
