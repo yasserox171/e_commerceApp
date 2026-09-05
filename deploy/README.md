@@ -13,8 +13,9 @@ below are what it installs; this page is just the map.
 | [`deploy.sh`](./deploy.sh) | One command for every update after the first setup: fetch → install → build → migrate → restart → verify. |
 | [`systemd/qri3a-api.service`](./systemd/qri3a-api.service) | The service unit, hardened. Reads secrets from `/etc/qri3a/api.env`. |
 | [`sudoers.d/qri3a-deploy`](./sudoers.d/qri3a-deploy) | Lets the deploy user restart its own service — that one command and nothing else. |
-| [`caddy/Caddyfile`](./caddy/Caddyfile) | Reverse proxy with automatic HTTPS. The default choice. |
-| [`nginx/qri3a-api.conf`](./nginx/qri3a-api.conf) | Same job for a server that already runs nginx; certificates via certbot. |
+| [`caddy/Caddyfile`](./caddy/Caddyfile) | Reverse proxy with automatic HTTPS. Use when ports 80/443 are free. |
+| [`nginx/qri3a-api.conf`](./nginx/qri3a-api.conf) | A vhost to add alongside the sites an existing nginx already serves; certificate via certbot. |
+| [`apache/9ri3a-api.conf`](./apache/9ri3a-api.conf) | The same, for an existing Apache. |
 | [`sql/products-search-indexes.sql`](./sql/products-search-indexes.sql) | Optional indexes on `public.products`, run once as the table's owner. |
 | [`../backend/api/.env.production.example`](../backend/api/.env.production.example) | Template for `/etc/qri3a/api.env`. Placeholders only — never fill this file in place. |
 

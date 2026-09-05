@@ -328,15 +328,6 @@ curl -sI http://9ri3a.centrefocus.ma/
 فحص المنفذ من داخل الخادم بـ `curl localhost` لا يثبت شيئاً — Let's Encrypt
 تتصل من الخارج.
 
-### قبل الخطوة 9: تأكّد أن المنفذ 80 فارغ
-
-```bash
-sudo ss -lntp | grep -E ':(80|443)\b'
-```
-
-إن كان nginx أو Apache يستمع عليهما أصلاً، فـ Caddy لن يستطيع الارتباط.
-إمّا توقفهما، أو استعمل مسار nginx في `deploy/nginx/qri3a-api.conf` بدل Caddy.
-
 ---
 
 ## 9. الوكيل العكسي و HTTPS
@@ -376,7 +367,31 @@ sudo ss -lntp | grep -E ':(80|443)\b'
 > و `PUBLIC_API_URL` في `/etc/qri3a/api.env`، و `api_url` عند بناء الـ APK
 > (الخطوة 12).
 
-الخيار المقترح هو Caddy لأنه يستخرج شهادة Let's Encrypt ويجدّدها وحده:
+### أولاً: من يشغل المنفذين 80 و 443؟
+
+```bash
+sudo ss -lntp | grep -E ':(80|443)\b'
+```
+
+المخرجات تحدّد أي مسار تتبع. **لا تحتاج منفذاً حرّاً على أي حال** — خوادم الويب
+توجّه حسب ترويسة `Host`، فاسم `9ri3a.centrefocus.ma` يتعايش مع كل المواقع
+الموجودة على نفس المنفذين. المطلوب vhost جديد، لا منفذ جديد.
+
+| المخرجات | المسار |
+|----------|--------|
+| فارغة | **أ** — ثبّت Caddy |
+| `nginx` | **ب** — أضف vhost إلى nginx الموجود |
+| `apache2` | **ج** — أضف vhost إلى Apache الموجود |
+| شيء آخر (Docker، Traefik…) | **د** — أضف الاسم إلى ما هو قائم، ووجّهه إلى `127.0.0.1:4000` |
+
+> **لا توقف خادم الويب الموجود ولا تحرّر منفذاً بالقوّة.** فوقه مواقع أخرى
+> تعمل، وإيقافها يعطّلها بلا داعٍ — المسارات ب/ج تضيف الواجهة بجانبها.
+
+---
+
+### المسار أ — المنفذان حرّان: Caddy
+
+Caddy هو الخيار المقترح هنا لأنه يستخرج شهادة Let's Encrypt ويجدّدها وحده:
 
 ```bash
 sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https curl
@@ -393,21 +408,85 @@ sudo nano /etc/caddy/Caddyfile     # الاسم معمّر مسبقاً — تأ
 sudo systemctl reload caddy
 ```
 
-> **إن كان nginx يعمل على السيرفر أصلاً**، استعمل
-> `deploy/nginx/qri3a-api.conf` بدل ذلك — تعليمات certbot مكتوبة في رأس الملف.
+انتقل إلى **التحقّق** في نهاية هذه الخطوة.
 
-**تحقّق:** من جهازك، لا من السيرفر.
+---
+
+### المسار ب — nginx يعمل أصلاً
+
+لا تثبّت Caddy ولا توقف nginx. أضف vhost بجانب المواقع القائمة.
+
+تأكّد أولاً أن الاسم غير مأخوذ:
+
+```bash
+grep -rn "server_name" /etc/nginx/sites-enabled/ /etc/nginx/conf.d/ 2>/dev/null
+```
+
+```bash
+sudo apt install -y certbot python3-certbot-nginx
+sudo cp /srv/qri3a/deploy/nginx/qri3a-api.conf /etc/nginx/sites-available/qri3a-api
+sudo ln -s /etc/nginx/sites-available/qri3a-api /etc/nginx/sites-enabled/
+
+sudo nginx -t                       # لا تكمل قبل أن يقول "syntax is ok"
+sudo systemctl reload nginx
+sudo certbot --nginx -d 9ri3a.centrefocus.ma
+```
+
+> ‏`nginx -t` ليس اختيارياً: خطأ في ملف واحد يمنع إعادة تحميل nginx كلّه، أي
+> **تتوقّف كل مواقعك الأخرى**، لا هذا الموقع وحده. الفحص يمنع ذلك تماماً.
+>
+> ‏`certbot --nginx` يضيف شهادة لهذا الاسم فقط ولا يمسّ شهادات المواقع الأخرى.
+
+---
+
+### المسار ج — Apache يعمل أصلاً
+
+```bash
+sudo apache2ctl -S 2>&1 | grep -i 9ri3a      # يجب ألّا يظهر شيء
+```
+
+```bash
+sudo a2enmod proxy proxy_http headers
+sudo cp /srv/qri3a/deploy/apache/9ri3a-api.conf /etc/apache2/sites-available/
+sudo a2ensite 9ri3a-api
+
+sudo apache2ctl configtest           # لا تكمل قبل "Syntax OK"
+sudo systemctl reload apache2
+sudo apt install -y certbot python3-certbot-apache
+sudo certbot --apache -d 9ri3a.centrefocus.ma
+```
+
+---
+
+### المسار د — وكيل آخر (Docker / Traefik / غيره)
+
+المبدأ نفسه: أضف اسم `9ri3a.centrefocus.ma` إلى الوكيل القائم ووجّهه إلى
+`127.0.0.1:4000`. الشرطان الوحيدان اللذان يعتمد عليهما الكود:
+
+1. تمرير عنوان العميل الحقيقي في `X-Real-IP` أو `X-Forwarded-For` —
+   محدّد المعدّل على `/auth` يعتمد عليه، وبدونه يُحسب كل الزوّار عميلاً واحداً.
+2. مهلة قراءة **120 ثانية على الأقل** — الافتراضي 30 ثانية يقطع استدعاء CMI
+   أثناء خطوة 3-D Secure، فيدفع الزبون ولا يُؤكَّد طلبه.
+
+استعمل `deploy/caddy/Caddyfile` أو `deploy/nginx/qri3a-api.conf` مرجعاً.
+
+---
+
+### تحقّق (لكل المسارات)
+
+من جهازك أنت، لا من السيرفر:
 
 ```bash
 curl -s https://9ri3a.centrefocus.ma/health
 ```
 
-إن فشل، تأكّد أولاً أن سجلّ `A` يشير فعلاً إلى السيرفر: Caddy لا يستطيع
-استخراج شهادة قبل ذلك.
+المتوقّع `"status":"ok"` بشهادة صالحة. وتأكّد أن المواقع الأخرى ما زالت تعمل.
+
+إن فشل، ابدأ بسجلّ `A` — لا شهادة قبل أن يشير الاسم إلى السيرفر:
 
 ```bash
 dig +short 9ri3a.centrefocus.ma
-sudo journalctl -u caddy -n 50 --no-pager
+sudo journalctl -u caddy -n 50 --no-pager      # أو nginx / apache2
 ```
 
 ---
