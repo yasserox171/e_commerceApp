@@ -1,5 +1,5 @@
-import type { BadgeTone } from '../components/Badge.js';
-import type { OrderStatus, PaymentMethod } from '../types.js';
+import type { BadgeTone } from '../components/Badge';
+import type { OrderStatus, PaymentMethod } from '../types';
 
 export interface OrderStatusPresentation {
   label: string;

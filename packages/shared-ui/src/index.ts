@@ -29,10 +29,10 @@ export {
   type ThemeColors,
   type ThemeProviderProps,
   type TypographyToken,
-} from './theme/index.js';
+} from './theme/index';
 
 // --- i18n --------------------------------------------------------------------
-export { enableRTL, isRTL, rtl } from './i18n/rtl.js';
+export { enableRTL, isRTL, rtl } from './i18n/rtl';
 export {
   formatDate,
   formatDateTime,
@@ -43,18 +43,18 @@ export {
   formatUnitPrice,
   pluralAr,
   truncate,
-} from './i18n/format.js';
+} from './i18n/format';
 export {
   ORDER_STATUS_LABELS,
   PAYMENT_METHOD_LABELS,
   orderStatusLabel,
   orderStatusTone,
   type OrderStatusPresentation,
-} from './i18n/orderStatus.js';
+} from './i18n/orderStatus';
 
 // --- api ---------------------------------------------------------------------
-export { ApiClient, ApiRequestError, type ApiClientOptions } from './api/client.js';
-export { ApiProvider, useApi, useApiClient, type ApiProviderProps } from './api/ApiProvider.js';
+export { ApiClient, ApiRequestError, type ApiClientOptions } from './api/client';
+export { ApiProvider, useApi, useApiClient, type ApiProviderProps } from './api/ApiProvider';
 export {
   queryKeys,
   useCancelOrder,
@@ -68,10 +68,10 @@ export {
   useProduct,
   useProducts,
   useStartCheckout,
-} from './api/hooks.js';
+} from './api/hooks';
 
 // --- components --------------------------------------------------------------
-export * from './components/index.js';
+export * from './components/index';
 
 // --- types -------------------------------------------------------------------
-export type * from './types.js';
+export type * from './types';

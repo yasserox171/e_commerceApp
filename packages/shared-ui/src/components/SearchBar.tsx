@@ -2,8 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View, type ViewStyle } from 'react-native';
 
-import { rtl } from '../i18n/rtl.js';
-import { useTheme } from '../theme/ThemeProvider.js';
+import { rtl } from '../i18n/rtl';
+import { useTheme } from '../theme/ThemeProvider';
 
 export interface SearchBarProps {
   value: string;

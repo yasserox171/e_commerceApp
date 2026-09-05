@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, Easing, StyleSheet, View, type ViewStyle } from 'react-native';
 
-import { useTheme } from '../theme/ThemeProvider.js';
+import { useTheme } from '../theme/ThemeProvider';
 
 export interface SkeletonProps {
   width?: number | `${number}%`;

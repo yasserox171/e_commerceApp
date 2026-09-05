@@ -3,8 +3,8 @@ import * as Haptics from 'expo-haptics';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View, type ViewStyle } from 'react-native';
 
-import { useTheme } from '../theme/ThemeProvider.js';
-import { Text } from './Text.js';
+import { useTheme } from '../theme/ThemeProvider';
+import { Text } from './Text';
 
 export interface QuantityStepperProps {
   value: number;

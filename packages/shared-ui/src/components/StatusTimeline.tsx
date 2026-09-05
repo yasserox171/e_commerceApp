@@ -2,10 +2,10 @@ import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 
-import { formatDateTime } from '../i18n/format.js';
-import { useTheme } from '../theme/ThemeProvider.js';
-import type { OrderEvent, OrderStatus } from '../types.js';
-import { Text } from './Text.js';
+import { formatDateTime } from '../i18n/format';
+import { useTheme } from '../theme/ThemeProvider';
+import type { OrderEvent, OrderStatus } from '../types';
+import { Text } from './Text';
 
 export interface StatusStep {
   status: OrderStatus;

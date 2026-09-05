@@ -3,8 +3,8 @@ import { Image, type ImageContentFit } from 'expo-image';
 import React, { useState } from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 
-import { useTheme } from '../theme/ThemeProvider.js';
-import { Skeleton } from './Skeleton.js';
+import { useTheme } from '../theme/ThemeProvider';
+import { Skeleton } from './Skeleton';
 
 export interface ProductImageProps {
   uri: string | null;

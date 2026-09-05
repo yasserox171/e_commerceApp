@@ -2,9 +2,9 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { StyleSheet, TextInput, View, type TextInputProps, type ViewStyle } from 'react-native';
 
-import { rtl } from '../i18n/rtl.js';
-import { useTheme } from '../theme/ThemeProvider.js';
-import { Text } from './Text.js';
+import { rtl } from '../i18n/rtl';
+import { useTheme } from '../theme/ThemeProvider';
+import { Text } from './Text';
 
 export interface TextFieldProps extends Omit<TextInputProps, 'style'> {
   label?: string;

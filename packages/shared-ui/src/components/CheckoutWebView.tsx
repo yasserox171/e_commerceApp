@@ -2,9 +2,9 @@ import React, { useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { WebView, type WebViewNavigation } from 'react-native-webview';
 
-import { useTheme } from '../theme/ThemeProvider.js';
-import type { CheckoutSession } from '../types.js';
-import { Text } from './Text.js';
+import { useTheme } from '../theme/ThemeProvider';
+import type { CheckoutSession } from '../types';
+import { Text } from './Text';
 
 export type CheckoutResultStatus = 'success' | 'failed' | 'cancelled' | 'unverified';
 

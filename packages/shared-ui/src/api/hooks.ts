@@ -18,8 +18,8 @@ import type {
   ProductQueryParams,
   ProductSummary,
   ShippingAddress,
-} from '../types.js';
-import { useApi, useApiClient } from './ApiProvider.js';
+} from '../types';
+import { useApi, useApiClient } from './ApiProvider';
 
 /**
  * Query keys are hierarchical so an invalidation can target one product or the

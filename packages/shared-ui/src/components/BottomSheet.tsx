@@ -15,8 +15,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useTheme } from '../theme/ThemeProvider.js';
-import { Text } from './Text.js';
+import { useTheme } from '../theme/ThemeProvider';
+import { Text } from './Text';
 
 export interface BottomSheetProps {
   visible: boolean;

@@ -1,9 +1,9 @@
 import React from 'react';
 import { StyleSheet, Text as RNText, type TextProps as RNTextProps, type TextStyle } from 'react-native';
 
-import { rtl } from '../i18n/rtl.js';
-import { useTheme } from '../theme/ThemeProvider.js';
-import type { ThemeColors, TypographyToken } from '../theme/tokens.js';
+import { rtl } from '../i18n/rtl';
+import { useTheme } from '../theme/ThemeProvider';
+import type { ThemeColors, TypographyToken } from '../theme/tokens';
 
 export interface TextProps extends RNTextProps {
   variant?: TypographyToken;

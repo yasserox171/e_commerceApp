@@ -1,33 +1,33 @@
-export { Badge, type BadgeProps, type BadgeTone } from './Badge.js';
-export { BottomSheet, type BottomSheetProps } from './BottomSheet.js';
-export { Button, type ButtonProps } from './Button.js';
-export { Card, Divider, type CardProps } from './Card.js';
+export { Badge, type BadgeProps, type BadgeTone } from './Badge';
+export { BottomSheet, type BottomSheetProps } from './BottomSheet';
+export { Button, type ButtonProps } from './Button';
+export { Card, Divider, type CardProps } from './Card';
 export {
   CheckoutWebView,
   type CheckoutResultStatus,
   type CheckoutWebViewProps,
-} from './CheckoutWebView.js';
-export { Chip, ChipRow, type ChipProps, type ChipRowProps } from './Chip.js';
-export { EmptyState, type EmptyStateProps } from './EmptyState.js';
-export { Price, type PriceProps } from './Price.js';
-export { ProductCard, type ProductCardProps } from './ProductCard.js';
-export { ProductImage, type ProductImageProps } from './ProductImage.js';
-export { QuantityStepper, type QuantityStepperProps } from './QuantityStepper.js';
-export { Screen, type ScreenProps } from './Screen.js';
-export { ScreenHeader, type ScreenHeaderProps } from './ScreenHeader.js';
-export { SearchBar, type SearchBarProps } from './SearchBar.js';
+} from './CheckoutWebView';
+export { Chip, ChipRow, type ChipProps, type ChipRowProps } from './Chip';
+export { EmptyState, type EmptyStateProps } from './EmptyState';
+export { Price, type PriceProps } from './Price';
+export { ProductCard, type ProductCardProps } from './ProductCard';
+export { ProductImage, type ProductImageProps } from './ProductImage';
+export { QuantityStepper, type QuantityStepperProps } from './QuantityStepper';
+export { Screen, type ScreenProps } from './Screen';
+export { ScreenHeader, type ScreenHeaderProps } from './ScreenHeader';
+export { SearchBar, type SearchBarProps } from './SearchBar';
 export {
   ListRowSkeleton,
   ProductCardSkeleton,
   Skeleton,
   type SkeletonProps,
-} from './Skeleton.js';
+} from './Skeleton';
 export {
   ORDER_STEPS,
   StatusTimeline,
   type StatusStep,
   type StatusTimelineProps,
-} from './StatusTimeline.js';
-export { Text, type TextProps } from './Text.js';
-export { TextField, type TextFieldProps } from './TextField.js';
-export { TierTable, type TierTableProps } from './TierTable.js';
+} from './StatusTimeline';
+export { Text, type TextProps } from './Text';
+export { TextField, type TextFieldProps } from './TextField';
+export { TierTable, type TierTableProps } from './TierTable';

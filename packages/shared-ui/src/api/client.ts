@@ -13,7 +13,7 @@ import type {
   ProductQueryParams,
   ProductSummary,
   ShippingAddress,
-} from '../types.js';
+} from '../types';
 
 export class ApiRequestError extends Error {
   readonly status: number;

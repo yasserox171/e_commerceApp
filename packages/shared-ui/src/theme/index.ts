@@ -1,4 +1,4 @@
-export { brand } from './palette.js';
+export { brand } from './palette';
 export {
   buildTheme,
   fontFamily,
@@ -13,5 +13,5 @@ export {
   type Theme,
   type ThemeColors,
   type TypographyToken,
-} from './tokens.js';
-export { ThemeProvider, useTheme, useThemedStyles, type ThemeProviderProps } from './ThemeProvider.js';
+} from './tokens';
+export { ThemeProvider, useTheme, useThemedStyles, type ThemeProviderProps } from './ThemeProvider';

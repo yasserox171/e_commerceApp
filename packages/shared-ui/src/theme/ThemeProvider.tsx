@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useMemo, type ReactNode } from 'react';
 import { useColorScheme } from 'react-native';
 
-import { buildTheme, type AppVariant, type ColorScheme, type Theme } from './tokens.js';
+import { buildTheme, type AppVariant, type ColorScheme, type Theme } from './tokens';
 
 const ThemeContext = createContext<Theme | null>(null);
 

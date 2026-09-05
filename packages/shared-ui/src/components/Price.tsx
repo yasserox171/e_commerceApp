@@ -1,10 +1,10 @@
 import React from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 
-import { formatMAD } from '../i18n/format.js';
-import { useTheme } from '../theme/ThemeProvider.js';
-import type { TypographyToken } from '../theme/tokens.js';
-import { Text } from './Text.js';
+import { formatMAD } from '../i18n/format';
+import { useTheme } from '../theme/ThemeProvider';
+import type { TypographyToken } from '../theme/tokens';
+import { Text } from './Text';
 
 export interface PriceProps {
   value: number;

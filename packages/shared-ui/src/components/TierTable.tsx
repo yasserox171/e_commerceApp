@@ -1,11 +1,11 @@
 import React from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 
-import { formatMAD } from '../i18n/format.js';
-import { useTheme } from '../theme/ThemeProvider.js';
-import type { PriceTier } from '../types.js';
-import { Badge } from './Badge.js';
-import { Text } from './Text.js';
+import { formatMAD } from '../i18n/format';
+import { useTheme } from '../theme/ThemeProvider';
+import type { PriceTier } from '../types';
+import { Badge } from './Badge';
+import { Text } from './Text';
 
 export interface TierTableProps {
   tiers: PriceTier[];

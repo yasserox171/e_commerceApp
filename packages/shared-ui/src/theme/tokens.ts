@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 
-import { brand } from './palette.js';
+import { brand } from './palette';
 
 export type AppVariant = 'wholesale' | 'retail';
 export type ColorScheme = 'light' | 'dark';
