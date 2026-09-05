@@ -58,6 +58,16 @@ npm run dropshipping
 
 <div dir="rtl">
 
+> هاد التطبيقات كتستعمل وحدات أصلية (`react-native-webview`، و plugin ديال RTL)
+> اللي **Expo Go ما يقدرش يشغلهم**. `npm run wholesale` كيقلع Metro فقط — باش
+> تشغلهم على جهاز خاصك **development build**:
+> `npm run android --workspace @ecommerce/wholesale` (كيتطلب Android SDK محلياً)،
+> ولا حمّل APK من GitHub Actions (شوف الأسفل).
+
+</div>
+
+<div dir="rtl">
+
 > **تحقق سريع:** افتح `http://localhost:4000/health` — خاصك تشوف `"database": { "ok": true }`.
 
 ### معاينة التصميم فالمتصفح
@@ -367,7 +377,7 @@ RTL مفعّل **على المستوى الأصلي** عبر plugin ديال `ex
 
 يعني التطبيق RTL من أول تشغيل بلا ما يتطلب إعادة تشغيل. زيادة على هادشي:
 
-- `enableRTL()` وقت التشغيل كشبكة أمان (Expo Go / التطوير)
+- `enableRTL()` وقت التشغيل كشبكة أمان (معاينة الويب، وأول إقلاع بعد التثبيت)
 - الأسعار كتبقى LTR داخل واجهة RTL — `45,00 د.م.` معكوسة كتقرا كرقم آخر
 - تنسيق التواريخ والجمع بالعربية مكتوب يدوياً (مثنى، جمع 3-10، جمع 11+) بلا `Intl`
   حيت Hermes عندو ICU ناقص وكيختلف من جهاز لآخر
