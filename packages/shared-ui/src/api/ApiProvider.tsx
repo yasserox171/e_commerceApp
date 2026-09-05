@@ -1,5 +1,4 @@
 import { useQueryClient } from '@tanstack/react-query';
-import * as SecureStore from 'expo-secure-store';
 import React, {
   createContext,
   useCallback,
@@ -11,8 +10,9 @@ import React, {
   type ReactNode,
 } from 'react';
 
-import type { AuthUser, Channel } from '../types.js';
-import { ApiClient, ApiRequestError } from './client.js';
+import type { AuthUser, Channel } from '../types';
+import { ApiClient, ApiRequestError } from './client';
+import { clearToken, readToken, writeToken } from './sessionStore';
 
 interface SessionState {
   user: AuthUser | null;
@@ -46,7 +46,7 @@ export interface ApiProviderProps {
 }
 
 /**
- * SecureStore keys are namespaced per channel so the wholesale and retail apps
+ * Storage keys are namespaced per channel so the wholesale and retail apps
  * can be installed side by side without sharing a session.
  */
 const tokenKey = (channel: Channel) => `qri3a.${channel}.token`;
@@ -74,14 +74,8 @@ export function ApiProvider({ baseUrl, channel, children }: ApiProviderProps) {
   const persistToken = useCallback(
     async (token: string | null) => {
       tokenRef.current = token;
-      try {
-        if (token) await SecureStore.setItemAsync(tokenKey(channel), token);
-        else await SecureStore.deleteItemAsync(tokenKey(channel));
-      } catch (error) {
-        // A device without a secure enclave (or a rooted emulator) can refuse.
-        // The session still works for this launch; it just won't survive one.
-        console.warn('[api] could not persist session token:', (error as Error).message);
-      }
+      if (token) await writeToken(tokenKey(channel), token);
+      else await clearToken(tokenKey(channel));
     },
     [channel],
   );
@@ -102,12 +96,7 @@ export function ApiProvider({ baseUrl, channel, children }: ApiProviderProps) {
     let cancelled = false;
 
     void (async () => {
-      let stored: string | null = null;
-      try {
-        stored = await SecureStore.getItemAsync(tokenKey(channel));
-      } catch {
-        stored = null;
-      }
+      const stored = await readToken(tokenKey(channel));
 
       if (!stored) {
         if (!cancelled) setState({ user: null, token: null, isRestoring: false });
