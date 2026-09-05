@@ -209,6 +209,47 @@ apps/dropshipping                backend/api                     CMI
 
 ## 📱 بناء ملفات APK
 
+عندك **طريقتين**. الأولى ما كتطلب لا حساب Expo لا خلاص.
+
+### الطريقة 1 — GitHub Actions (موصى بها، مجانية)
+
+</div>
+
+[`.github/workflows/build-apk.yml`](.github/workflows/build-apk.yml) كيولّد المشروع
+الأصلي بـ `expo prebuild` وكيبنيه بـ Gradle على runner ديال GitHub (فيه Android SDK مثبت).
+
+<div dir="rtl">
+
+من واجهة GitHub: **Actions → Build Android APK → Run workflow**، وعمّر:
+
+| الحقل | الوصف |
+|---|---|
+| `app` | `both` ولا تطبيق واحد |
+| `api_url` | عنوان الـ API — **كيتدمج فالـ APK**، خاصو يكون متاح من الهاتف |
+| `build_type` | `release` (للتثبيت) ولا `debug` |
+
+ولا من الطرفية:
+
+</div>
+
+```bash
+gh workflow run build-apk.yml \
+  -f app=both \
+  -f api_url=https://api.your-domain.ma \
+  -f build_type=release
+```
+
+<div dir="rtl">
+
+منين يكمل، حمّل الـ APK من **Artifacts** ديال الـ run. البناء موقّع بمفتاح debug —
+**كيتثبت عادي للاختبار**، لكن ماشي صالح للنشر على Google Play (شوف الأسفل).
+
+> ⚠️ `api_url` كيتدمج فالحزمة وقت البناء. `http://localhost` ولا `10.0.2.2`
+> ما غاديش يخدمو على هاتف حقيقي — استعمل عنوان LAN (`http://192.168.x.x:4000`)
+> ولا دومين حقيقي.
+
+### الطريقة 2 — EAS Build (كتطلب حساب Expo)
+
 </div>
 
 ```bash
@@ -262,6 +303,33 @@ npm run build:apk --workspace @ecommerce/dropshipping
 ```bash
 eas build --platform android --profile preview --local
 ```
+
+<div dir="rtl">
+
+### التوقيع للنشر على Google Play
+
+البناءات ديال GitHub Actions موقّعة بمفتاح debug ديال قالب Expo — كافي للاختبار،
+لكن Google Play كيرفضو. باش تنشر:
+
+</div>
+
+```bash
+# 1. ولّد مفتاح رفع (احتفظ به — ضياعه يعني ما تقدرش تحدّث التطبيق أبداً)
+keytool -genkeypair -v -keystore upload.jks -alias upload \
+  -keyalg RSA -keysize 2048 -validity 10000
+
+# 2. حوّله لـ base64 وحطه ف GitHub → Settings → Secrets → Actions
+base64 -w0 upload.jks
+```
+
+<div dir="rtl">
+
+ثم زيد الأسرار `ANDROID_KEYSTORE_BASE64` و `ANDROID_KEYSTORE_PASSWORD` و
+`ANDROID_KEY_ALIAS` و `ANDROID_KEY_PASSWORD`، وعدّل خطوة البناء فالـ workflow
+باش تفك ترميز الـ keystore وتمرّرو لـ Gradle. أو ببساطة استعمل
+`eas build --profile production` اللي كيدبّر التوقيع بوحدو.
+
+</div>
 
 ---
 
