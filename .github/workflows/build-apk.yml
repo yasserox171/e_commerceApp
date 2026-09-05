@@ -80,13 +80,18 @@ jobs:
           EXPO_PUBLIC_API_URL: ${{ github.event.inputs.api_url || 'https://api.example.com' }}
         run: npx expo prebuild --platform android --no-install --clean
 
+      # Written to the user-level Gradle file, never to the project's.
+      # `expo prebuild` emits android/gradle.properties WITHOUT a trailing
+      # newline, so appending there splices onto its last line — which is
+      # `expo.inlineModules.watchedDirectories=[]`. Corrupting that value makes
+      # Expo's autolinking plugin hand a JSON.parse a broken string, and the
+      # build dies as an opaque "Process 'command 'node'' finished with
+      # non-zero exit value 1".
       - name: Give Gradle enough heap
-        working-directory: apps/${{ matrix.app }}/android
         run: |
-          {
-            echo "org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g"
-            echo "org.gradle.parallel=true"
-          } >> gradle.properties
+          mkdir -p ~/.gradle
+          printf '\norg.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g\norg.gradle.parallel=true\n' \
+            >> ~/.gradle/gradle.properties
 
       - name: Cache Gradle
         uses: actions/cache@v4
