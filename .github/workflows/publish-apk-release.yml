@@ -61,12 +61,10 @@ jobs:
           fi
           echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
           echo "Publishing artifacts from run $RUN_ID"
-
           # The APK carries the commit it was built from; record it so the
           # release points at real source rather than at whatever HEAD is now.
-          SHA=$(gh run view "$RUN_ID" --json headSha --jq '.headSha')
-          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
-          echo "number=$(gh run view "$RUN_ID" --json number --jq '.number')" >> "$GITHUB_OUTPUT"
+          gh run view "$RUN_ID" --json headSha --jq '"sha=" + .headSha' >> "$GITHUB_OUTPUT"
+          gh run view "$RUN_ID" --json number --jq '"number=" + (.number|tostring)' >> "$GITHUB_OUTPUT"
 
       - name: Download the APKs from that run
         uses: actions/download-artifact@v4
@@ -77,64 +75,45 @@ jobs:
           github-token: ${{ github.token }}
 
       - name: Check what came back
-        id: files
         run: |
           set -euo pipefail
           find apks -type f | sort
-          COUNT=$(find apks -name '*.apk' -type f | wc -l)
-          if [ "$COUNT" -eq 0 ]; then
+          if [ "$(find apks -name '*.apk' -type f | wc -l)" -eq 0 ]; then
             echo "That run has no .apk artifacts (expired, or it failed)." >&2
             exit 1
           fi
-          echo "count=$COUNT" >> "$GITHUB_OUTPUT"
+
+      - name: Assemble the release notes
+        env:
+          EXTRA_NOTES: ${{ github.event.inputs.notes }}
+        run: |
+          set -euo pipefail
+          : > notes.md
+          if [ -n "$EXTRA_NOTES" ]; then
+            printf '%s\n\n' "$EXTRA_NOTES" >> notes.md
+          fi
+          cat .github/release-notes/apk.md >> notes.md
 
       - name: Publish the release
         env:
           GH_TOKEN: ${{ github.token }}
-          EXTRA_NOTES: ${{ github.event.inputs.notes }}
           REQUESTED_TAG: ${{ github.event.inputs.tag }}
+          RUN_NUMBER: ${{ steps.pick.outputs.number }}
+          BUILD_SHA: ${{ steps.pick.outputs.sha }}
         run: |
           set -euo pipefail
-          TAG="${REQUESTED_TAG:-apk-build-${{ steps.pick.outputs.number }}}"
-          SHA="${{ steps.pick.outputs.sha }}"
-
-          {
-            [ -n "$EXTRA_NOTES" ] && printf '%s\n\n' "$EXTRA_NOTES"
-            cat <<'BODY'
-## التثبيت
-
-1. اضغط على ملف `.apk` تحت **Assets** — يتحمّل مباشرة.
-2. افتح الملف بعد التحميل.
-3. Android سيطلب **السماح بالتثبيت من هذا المصدر** — وافق.
-
-التطبيقان يُثبّتان جنبًا إلى جنب (`ma.qri3a.wholesale` و `ma.qri3a.express`).
-
-| الملف | التطبيق |
-|---|---|
-| `9ri3a-wholesale-…apk` | **9ri3a** — الجملة، أسعار حسب الكمية |
-| `9ri3a-dropshipping-…apk` | **9ri3a espress** — التجزئة، دفع بالبطاقة |
-
-## ملاحظات
-
-- موقّعة بمفتاح debug: تُثبَّت للاختبار، ولا تصلح للنشر على Google Play.
-- عنوان الـ API مدمج وقت البناء. إذا لم يكن الخادم متاحًا من الهاتف، ستعمل كل
-  الشاشات لكن الكتالوج سيعرض «تعذر تحميل المنتجات». أعد التشغيل من
-  **Build Android APK** مع `api_url` الصحيح.
-BODY
-          } > notes.md
-
-          echo "Tag: $TAG · commit: $SHA"
+          TAG="${REQUESTED_TAG:-apk-build-${RUN_NUMBER}}"
+          echo "Tag: $TAG · commit: $BUILD_SHA"
           gh release create "$TAG" apks/*.apk \
-            --title "APK build ${{ steps.pick.outputs.number }}" \
+            --title "APK build ${RUN_NUMBER}" \
             --notes-file notes.md \
-            --target "$SHA" \
+            --target "$BUILD_SHA" \
             --prerelease
-
           {
             echo "### Release published"
             echo ""
             echo "**https://github.com/${GITHUB_REPOSITORY}/releases/tag/${TAG}**"
             echo ""
             gh release view "$TAG" --json assets \
-              --jq '.assets[] | "- [\(.name)](\(.url)) — \((.size/1048576*10|floor)/10) MB"'
+              --jq '.assets[] | "- \(.name) — \((.size/1048576*10|floor)/10) MB"'
           } >> "$GITHUB_STEP_SUMMARY"
