@@ -1,7 +1,7 @@
 # دليل النشر على الـ VPS — واجهة 9ri3a البرمجية (API)
 
 هذا الدليل يأخذك من سيرفر Ubuntu فارغ إلى واجهة برمجية تعمل على
-`https://api.your-domain.ma`، ويقرأ من قاعدة بيانات PostgreSQL الحقيقية،
+`https://9ri3a.centrefocus.ma`، ويقرأ من قاعدة بيانات PostgreSQL الحقيقية،
 ويخدم التطبيقين معاً.
 
 نفّذ الخطوات بالترتيب. كل خطوة تنتهي بأمر تحقّق — لا تنتقل إلى التالية قبل أن
@@ -182,7 +182,7 @@ sudo nano /etc/qri3a/api.env
 |---------|--------|
 | `DATABASE_URL` | `postgresql://qri3a_api:كلمة_المرور@127.0.0.1:5432/اسم_قاعدتك` |
 | `JWT_SECRET` | ناتج `openssl rand -base64 48` أعلاه |
-| `PUBLIC_API_URL` | `https://api.your-domain.ma` — نطاقك الحقيقي، وبـ `https` |
+| `PUBLIC_API_URL` | `https://9ri3a.centrefocus.ma` — نطاقك الحقيقي، وبـ `https` |
 
 > إن احتوت كلمة مرور القاعدة على أحد الرموز `: / ? # [ ] @` فرمّزها
 > (percent-encode) داخل الرابط، وإلا قرأها المحلّل كجزء من اسم المضيف.
@@ -335,7 +335,7 @@ sudo apt update && sudo apt install -y caddy
 
 ```bash
 sudo cp /srv/qri3a/deploy/caddy/Caddyfile /etc/caddy/Caddyfile
-sudo nano /etc/caddy/Caddyfile     # بدّل api.your-domain.ma بنطاقك
+sudo nano /etc/caddy/Caddyfile     # الاسم معمّر مسبقاً — تأكّد منه فقط
 sudo systemctl reload caddy
 ```
 
@@ -345,14 +345,14 @@ sudo systemctl reload caddy
 **تحقّق:** من جهازك، لا من السيرفر.
 
 ```bash
-curl -s https://api.your-domain.ma/health
+curl -s https://9ri3a.centrefocus.ma/health
 ```
 
 إن فشل، تأكّد أولاً أن سجلّ `A` يشير فعلاً إلى السيرفر: Caddy لا يستطيع
 استخراج شهادة قبل ذلك.
 
 ```bash
-dig +short api.your-domain.ma
+dig +short 9ri3a.centrefocus.ma
 sudo journalctl -u caddy -n 50 --no-pager
 ```
 
@@ -417,7 +417,7 @@ CMI_GATEWAY_URL=https://payment.cmi.co.ma/fim/est3Dgate
 1. افتح المستودع على GitHub ← تبويب **Actions** ← سير العمل **Build APK**.
 2. اضغط **Run workflow** واملأ:
    - `app`: ‏`both`
-   - `api_url`: ‏`https://api.your-domain.ma`
+   - `api_url`: ‏`https://9ri3a.centrefocus.ma`
    - `build_type`: ‏`release`
 3. بعد نحو 15 دقيقة، حمّل الـ APK من قسم **Artifacts** في صفحة التشغيل.
 

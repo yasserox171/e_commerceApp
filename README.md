@@ -245,7 +245,7 @@ apps/dropshipping                backend/api                     CMI
 ```bash
 gh workflow run build-apk.yml \
   -f app=both \
-  -f api_url=https://api.your-domain.ma \
+  -f api_url=https://9ri3a.centrefocus.ma \
   -f build_type=release
 ```
 
@@ -500,7 +500,7 @@ npm test --workspace @ecommerce/api                 # 22 اختبار وحدة
 ## 🚢 النشر على الـ VPS
 
 الدليل الكامل: **[`deploy/RUNBOOK.ar.md`](./deploy/RUNBOOK.ar.md)** — من سيرفر
-Ubuntu فارغ إلى `https://api.your-domain.ma`، خطوة بخطوة، وكل خطوة كتسالى
+Ubuntu فارغ إلى `https://9ri3a.centrefocus.ma`، خطوة بخطوة، وكل خطوة كتسالى
 بأمر تحقّق. خريطة الملفات ف [`deploy/README.md`](./deploy/README.md).
 
 بعد الإعداد الأول، كل تحديث أمر واحد:

@@ -3,7 +3,7 @@
 Everything needed to run the 9ri3a API on an Ubuntu VPS.
 
 **Start here:** [`RUNBOOK.ar.md`](./RUNBOOK.ar.md) — the step-by-step guide, in
-Arabic, from a bare server to a working `https://api.your-domain.ma`. The files
+Arabic, from a bare server to a working `https://9ri3a.centrefocus.ma`. The files
 below are what it installs; this page is just the map.
 
 | File | What it is |
