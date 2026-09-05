@@ -101,6 +101,14 @@ set -a
 . "$ENV_FILE"
 set +a
 [ -n "${DATABASE_URL:-}" ] || die "DATABASE_URL is not set in $ENV_FILE."
+
+# NODE_ENV=production belongs to the service, not to this shell. npm reads it
+# and drops every devDependency — TypeScript included — which it does even when
+# --include=dev is passed, so the build would fail on implicit any. Nothing
+# deploy.sh runs cares about NODE_ENV; systemd hands the real value to the
+# service from this same file.
+unset NODE_ENV
+
 ok "environment loaded from $ENV_FILE"
 
 # --- update the checkout -----------------------------------------------------
