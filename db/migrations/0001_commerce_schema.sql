@@ -11,7 +11,17 @@
 --   * Dropshipping orders are additionally constrained to card payments only.
 -- =============================================================================
 
-CREATE SCHEMA IF NOT EXISTS commerce;
+-- `CREATE SCHEMA IF NOT EXISTS` checks the CREATE privilege on the database
+-- before it checks existence, so it fails for a role that merely owns an
+-- already-created `commerce`. Looking first lets a DBA pre-create the schema
+-- and hand the API role nothing more than ownership of it.
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_namespace WHERE nspname = 'commerce') THEN
+    CREATE SCHEMA commerce;
+  END IF;
+END
+$$;
 
 -- gen_random_uuid() lives in pgcrypto on PG < 13 and in core on PG >= 13.
 DO $$

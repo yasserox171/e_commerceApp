@@ -1,0 +1,20 @@
+# Lets the qri3a deploy user restart its own service, and nothing else.
+#
+#   sudo cp deploy/sudoers.d/qri3a-deploy /etc/sudoers.d/qri3a-deploy
+#   sudo chown root:root /etc/sudoers.d/qri3a-deploy
+#   sudo chmod 0440 /etc/sudoers.d/qri3a-deploy
+#   sudo visudo -c -f /etc/sudoers.d/qri3a-deploy     # must say "parsed OK"
+#
+# Without this, deploy.sh runs every step and then fails at the restart, because
+# qri3a is a --system account with no sudo rights. The alternative — running the
+# whole deploy as root — would litter /srv/qri3a with root-owned files that the
+# service user can no longer rewrite.
+#
+# The command is matched literally, arguments included: this grants "restart
+# qri3a-api" only. It does not allow `systemctl restart` of anything else, nor
+# editing the unit, nor a shell.
+#
+# A syntax error in a sudoers file can lock you out of sudo entirely, which is
+# why the visudo check above is not optional.
+
+qri3a ALL=(root) NOPASSWD: /usr/bin/systemctl restart qri3a-api

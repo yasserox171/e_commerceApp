@@ -4,7 +4,7 @@ import express, { type Express } from 'express';
 import helmet from 'helmet';
 import morgan from 'morgan';
 
-import { env, isProduction } from './config/env.js';
+import { env, isPaymentProviderConfigured, isProduction } from './config/env.js';
 import { checkDatabase } from './db/pool.js';
 import { authRouter } from './domain/auth/auth.routes.js';
 import { cartRouter } from './domain/cart/cart.routes.js';
@@ -51,6 +51,8 @@ export function createApp(): Express {
     express.json({ limit: '1mb' })(req, res, next);
   });
 
+  // Deliberately the one route that reports on itself: a deployment is
+  // reachable long before it is correct, and this is what tells the two apart.
   app.get('/health', async (_req, res) => {
     const database = await checkDatabase();
     res.status(database.ok ? 200 : 503).json({
@@ -58,7 +60,12 @@ export function createApp(): Express {
       uptimeSeconds: Math.round(process.uptime()),
       environment: env.NODE_ENV,
       database,
-      paymentProvider: env.PAYMENT_PROVIDER,
+      payments: {
+        provider: env.PAYMENT_PROVIDER,
+        // False means the catalogue works but checkout answers 503 — a normal
+        // state while a CMI contract is still pending.
+        configured: isPaymentProviderConfigured(),
+      },
       timestamp: new Date().toISOString(),
     });
   });

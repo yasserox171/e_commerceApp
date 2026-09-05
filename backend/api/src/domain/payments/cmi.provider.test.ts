@@ -2,7 +2,15 @@ import { createHash } from 'node:crypto';
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { computeCmiHash } from './cmi.provider.js';
+// computeCmiHash is pure, but its module pulls in config/env, which refuses to
+// load without a database URL and a signing secret. Supplying throwaway values
+// keeps `npm test` runnable on a clean checkout with no .env — the import has
+// to be dynamic so these land before the module is evaluated. `??=` so a real
+// .env, when there is one, still wins.
+process.env.DATABASE_URL ??= 'postgresql://unused:unused@127.0.0.1:5432/unused';
+process.env.JWT_SECRET ??= 'test-only-secret-that-is-long-enough-to-pass';
+
+const { computeCmiHash } = await import('./cmi.provider.js');
 
 /**
  * The hash is the whole of CMI's integrity guarantee: it authenticates the

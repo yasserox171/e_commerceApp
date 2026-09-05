@@ -1,0 +1,47 @@
+# Caddy reverse proxy for the 9ri3a API.
+#
+# Caddy obtains and renews a Let's Encrypt certificate on its own, which is why
+# it is the default here: the payment gateway will not post results back to a
+# plain-http address, and the API refuses to start in production without https.
+#
+#   sudo cp deploy/caddy/Caddyfile /etc/caddy/Caddyfile
+#   sudo systemctl reload caddy
+#
+# Replace api.your-domain.ma with a hostname whose A record already points at
+# this server — Caddy validates over HTTP/443 and will fail loudly otherwise.
+
+api.your-domain.ma {
+	encode zstd gzip
+
+	# The API sets its own security headers via helmet; these cover what a
+	# proxy is better placed to assert.
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+
+	reverse_proxy 127.0.0.1:4000 {
+		# Express is configured with `trust proxy`, so it reads the real client
+		# IP from here — the rate limiter on /auth depends on it being right.
+		header_up X-Real-IP {remote_host}
+
+		# A card payment can sit on the gateway's 3-D Secure step for a while;
+		# the default 30s would cut the callback off.
+		transport http {
+			read_timeout 120s
+			write_timeout 120s
+		}
+
+		health_uri /health
+		health_interval 30s
+		health_timeout 5s
+	}
+
+	log {
+		output file /var/log/caddy/qri3a-api.log {
+			roll_size 20mb
+			roll_keep 10
+		}
+		format json
+	}
+}

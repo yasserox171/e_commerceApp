@@ -58,7 +58,17 @@ function loadMigrations(dir: string): Migration[] {
 }
 
 async function ensureBookkeepingTable(): Promise<void> {
-  await pool.query('CREATE SCHEMA IF NOT EXISTS commerce');
+  // `CREATE SCHEMA IF NOT EXISTS` checks the CREATE privilege on the database
+  // before it checks whether the schema exists, so issuing it unconditionally
+  // fails for a role that merely owns an already-created `commerce`. Look first,
+  // and only ask for the privilege when the schema is genuinely missing — that
+  // is what lets the deployment run without CREATE on the database.
+  // pg_namespace rather than information_schema.schemata: the latter hides
+  // schemas the current role does not own.
+  const existing = await pool.query(`SELECT 1 FROM pg_namespace WHERE nspname = 'commerce'`);
+  if (existing.rowCount === 0) {
+    await pool.query('CREATE SCHEMA commerce');
+  }
   await pool.query(`
     CREATE TABLE IF NOT EXISTS commerce.schema_migrations (
       name        TEXT PRIMARY KEY,

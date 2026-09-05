@@ -15,7 +15,10 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "declaration": false,
-    "sourceMap": true
+    "sourceMap": true,
+    // A deploy builds straight into the directory systemd starts from, so a
+    // build with type errors must leave the previous dist/ untouched.
+    "noEmitOnError": true
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"]

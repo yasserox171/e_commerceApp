@@ -20,6 +20,10 @@ const csv = (value: string): string[] =>
 const schema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(4000),
+  // Interface to bind. 0.0.0.0 by default so a phone on the same Wi-Fi can
+  // reach the dev server; behind a reverse proxy set 127.0.0.1 so the API has
+  // no public socket of its own even if the firewall is misconfigured.
+  HOST: z.string().default('0.0.0.0'),
   CORS_ORIGINS: z.string().default('').transform(csv),
 
   DATABASE_URL: z
@@ -97,29 +101,58 @@ export function databaseSslConfig(): false | { rejectUnauthorized: boolean; ca?:
   }
 }
 
+/** True when the configured gateway has everything it needs to take a payment. */
+export function isPaymentProviderConfigured(): boolean {
+  return env.PAYMENT_PROVIDER === 'stripe'
+    ? Boolean(env.STRIPE_SECRET_KEY)
+    : Boolean(env.CMI_CLIENT_ID && env.CMI_STORE_KEY);
+}
+
+export interface ConfigReview {
+  /** Security hazards. The server refuses to start in production with any of these. */
+  fatal: string[];
+  /** Real gaps that do not make the deployment unsafe — logged loudly instead. */
+  warnings: string[];
+}
+
 /**
- * Configuration problems that only matter in production are collected here so
- * `server.ts` can refuse to start rather than failing later at checkout time.
+ * Splits production configuration problems by whether they can hurt someone.
+ *
+ * An unconfigured payment gateway is deliberately NOT fatal: the catalogue,
+ * accounts, cart and order history all work without one, and `/payments/checkout`
+ * already answers 503 with a plain explanation. Refusing to boot would mean a
+ * merchant cannot run the API at all while their CMI contract is still being
+ * signed — which is the normal state for weeks.
+ *
+ * A placeholder signing secret or a plain-http callback URL is different: those
+ * are exploitable, so they stop the process.
  */
-export function productionConfigProblems(): string[] {
-  const problems: string[] = [];
-  if (!isProduction) return problems;
+export function reviewProductionConfig(): ConfigReview {
+  const review: ConfigReview = { fatal: [], warnings: [] };
+  if (!isProduction) return review;
 
   if (env.JWT_SECRET.includes('change-me')) {
-    problems.push('JWT_SECRET still holds the placeholder value from .env.example');
+    review.fatal.push(
+      'JWT_SECRET still holds the placeholder from .env.example — anyone can forge a session. Generate one with: openssl rand -base64 48',
+    );
   }
   if (!env.PUBLIC_API_URL.startsWith('https://')) {
-    problems.push('PUBLIC_API_URL must be https in production — payment gateways refuse plain http callbacks');
+    review.fatal.push(
+      'PUBLIC_API_URL must be https in production — it is the address payment gateways post results back to',
+    );
   }
-  if (env.PAYMENT_PROVIDER === 'cmi') {
-    if (!env.CMI_CLIENT_ID) problems.push('CMI_CLIENT_ID is empty but PAYMENT_PROVIDER=cmi');
-    if (!env.CMI_STORE_KEY) problems.push('CMI_STORE_KEY is empty but PAYMENT_PROVIDER=cmi');
-    if (env.CMI_GATEWAY_URL.includes('testpayment')) {
-      problems.push('CMI_GATEWAY_URL still points at the CMI test gateway');
-    }
+
+  if (!isPaymentProviderConfigured()) {
+    review.warnings.push(
+      env.PAYMENT_PROVIDER === 'stripe'
+        ? 'STRIPE_SECRET_KEY is empty — checkout will answer 503 until it is set'
+        : 'CMI_CLIENT_ID / CMI_STORE_KEY are empty — checkout will answer 503 until they are set',
+    );
+  } else if (env.PAYMENT_PROVIDER === 'cmi' && env.CMI_GATEWAY_URL.includes('testpayment')) {
+    review.warnings.push(
+      'CMI_GATEWAY_URL points at the test gateway — real cards will not be charged',
+    );
   }
-  if (env.PAYMENT_PROVIDER === 'stripe' && !env.STRIPE_SECRET_KEY) {
-    problems.push('STRIPE_SECRET_KEY is empty but PAYMENT_PROVIDER=stripe');
-  }
-  return problems;
+
+  return review;
 }

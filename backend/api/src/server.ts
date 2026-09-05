@@ -1,18 +1,27 @@
 import { createApp } from './app.js';
-import { env, isProduction, productionConfigProblems } from './config/env.js';
+import { env, isPaymentProviderConfigured, isProduction, reviewProductionConfig } from './config/env.js';
 import { checkDatabase, closePool } from './db/pool.js';
 
-const problems = productionConfigProblems();
-if (problems.length > 0) {
+const review = reviewProductionConfig();
+
+if (review.fatal.length > 0) {
   console.error('Refusing to start in production with an unsafe configuration:');
-  for (const problem of problems) console.error(`  • ${problem}`);
+  for (const problem of review.fatal) console.error(`  • ${problem}`);
   process.exit(1);
 }
 
+for (const warning of review.warnings) {
+  console.warn(`▸ warning: ${warning}`);
+}
+
 const app = createApp();
-const server = app.listen(env.PORT, () => {
-  console.log(`▸ API listening on http://localhost:${env.PORT} (${env.NODE_ENV})`);
-  console.log(`▸ payment provider: ${env.PAYMENT_PROVIDER} · prepaid card only, no COD`);
+const server = app.listen(env.PORT, env.HOST, () => {
+  console.log(`▸ API listening on http://${env.HOST}:${env.PORT} (${env.NODE_ENV})`);
+  console.log(
+    `▸ payment provider: ${env.PAYMENT_PROVIDER}` +
+      `${isPaymentProviderConfigured() ? '' : ' (NOT configured — checkout returns 503)'}` +
+      ' · prepaid card only, no COD',
+  );
 });
 
 // A dead database should be visible at boot, not at the first request. It is a

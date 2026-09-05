@@ -6,7 +6,9 @@ node_modules/
 # secrets — NEVER commit real credentials
 .env
 .env.*
+# Templates carry placeholders only and are meant to be read before deploying.
 !.env.example
+!.env.production.example
 *.pem
 *.key
 *.p12

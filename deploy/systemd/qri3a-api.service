@@ -1,0 +1,69 @@
+[Unit]
+Description=9ri3a commerce API
+Documentation=https://github.com/yasserox171/e_commerceApp
+# Start after the network and, when Postgres is on this same box, after it too.
+# `Wants` rather than `Requires`: the API comes up and reports "degraded" on
+# /health if the database is briefly down, which is more useful than refusing.
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=qri3a
+Group=qri3a
+WorkingDirectory=/srv/qri3a/backend/api
+
+# Secrets live here, readable only by the service user. Never in this unit file
+# — systemd unit files are world-readable.
+EnvironmentFile=/etc/qri3a/api.env
+
+ExecStart=/usr/bin/node dist/server.js
+
+# server.ts closes the HTTP server and drains the pg pool on SIGTERM, so a
+# restart finishes in-flight requests instead of cutting them off.
+KillSignal=SIGTERM
+TimeoutStopSec=20
+
+Restart=on-failure
+RestartSec=5
+# Give up if it crash-loops, so a bad deploy is visible rather than silently
+# thrashing the CPU.
+StartLimitBurst=5
+StartLimitIntervalSec=120
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=qri3a-api
+
+# --- hardening -------------------------------------------------------------
+# This process reads a database and serves HTTP. It needs none of the below.
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+ProtectKernelLogs=true
+ProtectProc=invisible
+RestrictSUIDSGID=true
+RestrictRealtime=true
+RestrictNamespaces=true
+LockPersonality=true
+MemoryDenyWriteExecute=false
+RemoveIPC=true
+# IPv4/IPv6/Unix only — Unix is needed for a local Postgres socket.
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+# ProtectSystem=strict makes everything read-only; nothing is written outside
+# the journal, so no ReadWritePaths is needed.
+CapabilityBoundingSet=
+AmbientCapabilities=
+
+[Install]
+WantedBy=multi-user.target
