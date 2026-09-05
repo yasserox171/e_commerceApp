@@ -9,6 +9,7 @@ below are what it installs; this page is just the map.
 | File | What it is |
 |---|---|
 | [`RUNBOOK.ar.md`](./RUNBOOK.ar.md) | The deployment guide. Read it first. |
+| [`SERVER-PROMPT.md`](./SERVER-PROMPT.md) | The brief for a Claude Code session running *on the VPS*: what it may assume, what it must ask, and what it must not touch. |
 | [`deploy.sh`](./deploy.sh) | One command for every update after the first setup: fetch → install → build → migrate → restart → verify. |
 | [`systemd/qri3a-api.service`](./systemd/qri3a-api.service) | The service unit, hardened. Reads secrets from `/etc/qri3a/api.env`. |
 | [`sudoers.d/qri3a-deploy`](./sudoers.d/qri3a-deploy) | Lets the deploy user restart its own service — that one command and nothing else. |
