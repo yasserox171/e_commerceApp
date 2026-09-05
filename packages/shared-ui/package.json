@@ -1,0 +1,32 @@
+{
+  "name": "@ecommerce/shared-ui",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Shared design system, RTL helpers and API client for the 9ri3a apps. Consumed as TypeScript source — Metro transpiles it, so there is no build step.",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./theme": "./src/theme/index.ts",
+    "./components": "./src/components/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "peerDependencies": {
+    "@expo/vector-icons": "*",
+    "@tanstack/react-query": "*",
+    "expo-haptics": "*",
+    "expo-image": "*",
+    "expo-secure-store": "*",
+    "expo-status-bar": "*",
+    "react": "*",
+    "react-native": "*",
+    "react-native-safe-area-context": "*",
+    "react-native-webview": "*"
+  },
+  "devDependencies": {
+    "@types/react": "~19.2.0",
+    "typescript": "~5.9.2"
+  }
+}
