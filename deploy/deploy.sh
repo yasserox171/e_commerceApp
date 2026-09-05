@@ -58,7 +58,7 @@ RESTARTED=0
 recovery_hint() {
   [ "$MOVED" = "1" ] || return 0
   if [ "$RESTARTED" = "1" ]; then
-    printf '\n  The new code IS running and is not healthy. To go back:\n' >&2
+    printf '\n  The restart already happened, so the old code is no longer\n  serving either. To go back to it:\n' >&2
   else
     printf '\n  The service was not restarted, so it is still running the\n  previous code. To put the checkout back to match it:\n' >&2
   fi
