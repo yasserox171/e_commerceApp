@@ -25,7 +25,7 @@ import {
 } from '@ecommerce/shared-ui';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 
 type AddressDraft = Omit<ShippingAddress, 'countryCode'>;
@@ -69,6 +69,18 @@ export default function CheckoutScreen() {
   const [session, setSession] = useState<CheckoutSession | null>(null);
   // Kept so a failed payment can be retried without recreating the order.
   const [pendingOrderId, setPendingOrderId] = useState<string | null>(null);
+
+  // The session restores asynchronously, so `user` is usually null on the first
+  // render and the initial state above prefills nothing. Backfill once it
+  // arrives — but only fields the customer has not already typed into.
+  useEffect(() => {
+    if (!user) return;
+    setAddress((current) => ({
+      ...current,
+      fullName: current.fullName || user.fullName || '',
+      phone: current.phone || user.phone || '',
+    }));
+  }, [user]);
 
   const busy = createOrder.isPending || startCheckout.isPending;
 

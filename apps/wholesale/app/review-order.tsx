@@ -21,7 +21,7 @@ import {
 } from '@ecommerce/shared-ui';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 
 type AddressDraft = Omit<ShippingAddress, 'countryCode'>;
@@ -73,6 +73,18 @@ export default function ReviewOrderScreen() {
   const [note, setNote] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('card');
   const [errors, setErrors] = useState<Partial<Record<keyof AddressDraft | 'form', string>>>({});
+
+  // The session restores asynchronously, so `user` is usually null on the first
+  // render and the initial state above prefills nothing. Backfill once it
+  // arrives — but only fields the customer has not already typed into.
+  useEffect(() => {
+    if (!user) return;
+    setAddress((current) => ({
+      ...current,
+      fullName: current.fullName || user.businessName || user.fullName || '',
+      phone: current.phone || user.phone || '',
+    }));
+  }, [user]);
 
   const update = (key: keyof AddressDraft, value: string) =>
     setAddress((current) => ({ ...current, [key]: value }));
