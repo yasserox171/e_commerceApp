@@ -1,4 +1,4 @@
-import { I18nManager } from 'react-native';
+import { I18nManager, Platform } from 'react-native';
 
 /**
  * Both apps are Arabic-first, so RTL is not a user preference — it is the
@@ -15,18 +15,33 @@ import { I18nManager } from 'react-native';
  */
 export function enableRTL(): { isRTL: boolean; needsRestart: boolean } {
   I18nManager.allowRTL(true);
+  I18nManager.forceRTL(true);
 
-  if (!I18nManager.isRTL) {
-    I18nManager.forceRTL(true);
-    // The flag is set but this JS bundle is already laid out LTR.
-    return { isRTL: false, needsRestart: true };
+  // On web there is no native flag to persist: react-native-web reads
+  // I18nManager for style flipping, but the document's own text direction is an
+  // HTML attribute, and without it the browser lays paragraphs out LTR.
+  if (Platform.OS === 'web' && typeof document !== 'undefined') {
+    document.documentElement.setAttribute('dir', 'rtl');
+    document.documentElement.setAttribute('lang', 'ar');
+    return { isRTL: true, needsRestart: false };
   }
 
-  I18nManager.forceRTL(true);
-  return { isRTL: true, needsRestart: false };
+  // Native: the flag is written, but this JS bundle is already laid out LTR if
+  // it was not set when the process started.
+  return { isRTL: I18nManager.isRTL, needsRestart: !I18nManager.isRTL };
 }
 
-export const isRTL = (): boolean => I18nManager.isRTL;
+/**
+ * react-native-web's I18nManager is a stub whose `isRTL` stays false however it
+ * is called, so on web the document's own `dir` is the only honest answer —
+ * and it is what the browser actually laid the page out with.
+ */
+export const isRTL = (): boolean => {
+  if (Platform.OS === 'web' && typeof document !== 'undefined') {
+    return document.documentElement.getAttribute('dir') === 'rtl';
+  }
+  return I18nManager.isRTL;
+};
 
 /**
  * `flexDirection: 'row'` already flips under RTL. These helpers are for the
@@ -34,16 +49,28 @@ export const isRTL = (): boolean => I18nManager.isRTL;
  * line, or a chevron that should mirror.
  */
 export const rtl = {
-  /** Chevron that means "forward" in reading order. */
+  /**
+   * Disclosure indicator — "there is more this way", the arrow at the end of a
+   * list row. It points along the reading direction, so it flips to `‹` in RTL.
+   */
   forwardChevron: (): 'chevron-back' | 'chevron-forward' =>
-    I18nManager.isRTL ? 'chevron-back' : 'chevron-forward',
+    isRTL() ? 'chevron-back' : 'chevron-forward',
+
+  /**
+   * Back affordance in a navigation header. It points AGAINST the reading
+   * direction — `‹` in LTR, `›` in RTL — matching how iOS and Android mirror
+   * their own back chevrons. Not the same as `forwardChevron`, and using one
+   * for the other leaves the back button pointing into the screen.
+   */
+  backChevron: (): 'chevron-back' | 'chevron-forward' =>
+    isRTL() ? 'chevron-forward' : 'chevron-back',
 
   /** Multiplier for translate animations so they move toward the start edge. */
-  directionMultiplier: (): 1 | -1 => (I18nManager.isRTL ? -1 : 1),
+  directionMultiplier: (): 1 | -1 => (isRTL() ? -1 : 1),
 
   /** `textAlign` for body copy — explicit beats relying on the default. */
-  textAlign: (): 'right' | 'left' => (I18nManager.isRTL ? 'right' : 'left'),
+  textAlign: (): 'right' | 'left' => (isRTL() ? 'right' : 'left'),
 
   /** Opposite edge, for things like a price pinned against the text. */
-  textAlignOpposite: (): 'right' | 'left' => (I18nManager.isRTL ? 'left' : 'right'),
+  textAlignOpposite: (): 'right' | 'left' => (isRTL() ? 'left' : 'right'),
 };

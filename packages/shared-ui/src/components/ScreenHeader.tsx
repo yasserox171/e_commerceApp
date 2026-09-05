@@ -2,9 +2,9 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { type ReactNode } from 'react';
 import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
 
-import { rtl } from '../i18n/rtl.js';
-import { useTheme } from '../theme/ThemeProvider.js';
-import { Text } from './Text.js';
+import { rtl } from '../i18n/rtl';
+import { useTheme } from '../theme/ThemeProvider';
+import { Text } from './Text';
 
 export interface ScreenHeaderProps {
   title: string;
@@ -47,7 +47,7 @@ export function ScreenHeader({ title, subtitle, onBack, action, style }: ScreenH
           ]}
         >
           {/* Mirrors with the layout: "back" points right in an RTL app. */}
-          <Ionicons name={rtl.forwardChevron()} size={20} color={theme.colors.text} />
+          <Ionicons name={rtl.backChevron()} size={20} color={theme.colors.text} />
         </Pressable>
       )}
 

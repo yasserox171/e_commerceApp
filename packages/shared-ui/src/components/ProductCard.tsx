@@ -3,13 +3,13 @@ import * as Haptics from 'expo-haptics';
 import React, { useCallback, useRef } from 'react';
 import { Animated, Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
 
-import { formatMAD, truncate } from '../i18n/format.js';
-import { useTheme } from '../theme/ThemeProvider.js';
-import type { ProductSummary } from '../types.js';
-import { Badge } from './Badge.js';
-import { Price } from './Price.js';
-import { ProductImage } from './ProductImage.js';
-import { Text } from './Text.js';
+import { formatMAD, truncate } from '../i18n/format';
+import { useTheme } from '../theme/ThemeProvider';
+import type { ProductSummary } from '../types';
+import { Badge } from './Badge';
+import { Price } from './Price';
+import { ProductImage } from './ProductImage';
+import { Text } from './Text';
 
 export interface ProductCardProps {
   product: ProductSummary;
@@ -78,29 +78,6 @@ export function ProductCard({
             {unavailable && <Badge label="نفد المخزون" tone="neutral" icon="close-circle-outline" />}
           </View>
 
-          {onQuickAdd && !unavailable && (
-            <Pressable
-              onPress={() => {
-                void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                onQuickAdd(product);
-              }}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel={`إضافة ${product.title}`}
-              style={[
-                styles.quickAdd,
-                theme.shadows.sm,
-                {
-                  backgroundColor: theme.colors.primary,
-                  bottom: theme.spacing.sm,
-                  insetInlineEnd: theme.spacing.sm,
-                  borderRadius: theme.radius.pill,
-                },
-              ]}
-            >
-              <Ionicons name={quickAddIcon} size={20} color={theme.colors.onPrimary} />
-            </Pressable>
-          )}
         </View>
 
         <View style={{ gap: theme.spacing.xxs }}>
@@ -135,9 +112,39 @@ export function ProductCard({
           )}
         </View>
       </Pressable>
+
+      {/* Sibling of the card's Pressable, not a child: a touchable inside a
+          touchable renders as a <button> nested in a <button> on web, which is
+          invalid HTML, and on native it makes the hit areas fight. The image is
+          square and flush to the card's width, so its bottom edge is at `width`. */}
+      {onQuickAdd && !unavailable && (
+        <Pressable
+          onPress={() => {
+            void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            onQuickAdd(product);
+          }}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={`إضافة ${product.title}`}
+          style={[
+            styles.quickAdd,
+            theme.shadows.sm,
+            {
+              backgroundColor: theme.colors.primary,
+              top: width - QUICK_ADD_SIZE - theme.spacing.sm,
+              insetInlineEnd: theme.spacing.sm,
+              borderRadius: theme.radius.pill,
+            },
+          ]}
+        >
+          <Ionicons name={quickAddIcon} size={20} color={theme.colors.onPrimary} />
+        </Pressable>
+      )}
     </Animated.View>
   );
 }
+
+const QUICK_ADD_SIZE = 40;
 
 const styles = StyleSheet.create({
   badgeStack: {
@@ -146,8 +153,8 @@ const styles = StyleSheet.create({
   },
   quickAdd: {
     position: 'absolute',
-    width: 40,
-    height: 40,
+    width: QUICK_ADD_SIZE,
+    height: QUICK_ADD_SIZE,
     alignItems: 'center',
     justifyContent: 'center',
   },
