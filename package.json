@@ -1,0 +1,28 @@
+{
+  "name": "ecommerce-project",
+  "version": "1.0.0",
+  "private": true,
+  "description": "9ri3a (wholesale) + 9ri3a espress (dropshipping) — monorepo: 2 Expo apps, a shared UI package and an Express/PostgreSQL API.",
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "backend/*"
+  ],
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "scripts": {
+    "api:dev": "npm run dev --workspace @ecommerce/api",
+    "api:build": "npm run build --workspace @ecommerce/api",
+    "api:start": "npm run start --workspace @ecommerce/api",
+    "db:migrate": "npm run migrate --workspace @ecommerce/api",
+    "db:migrate:status": "npm run migrate:status --workspace @ecommerce/api",
+    "wholesale": "npm run start --workspace @ecommerce/wholesale",
+    "dropshipping": "npm run start --workspace @ecommerce/dropshipping",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present"
+  },
+  "devDependencies": {
+    "typescript": "~5.9.2"
+  }
+}
