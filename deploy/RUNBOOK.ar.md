@@ -268,20 +268,74 @@ journalctl -u qri3a-api -n 50 --no-pager
 ## 8. الجدار الناري
 
 الواجهة مربوطة على `127.0.0.1` فقط (المفتاح `HOST` في ملف الأسرار)، فالمنفذ
-`4000` غير مرئي من الإنترنت أصلاً. ومع ذلك:
+`4000` غير مرئي من الإنترنت أصلاً. المطلوب فتحه: `22` و `80` و `443` فقط.
+
+> ### ⚠️ على Oracle Cloud هناك جداران ناريان
+>
+> فتح المنافذ في **Security List** لوحة تحكّم Oracle **لا يكفي**. صور Ubuntu
+> على OCI تأتي بقواعد `iptables` مثبّتة مسبقاً تحجب كل شيء عدا `22`، مستقلّة
+> تماماً عن الـ Security List. هذا أشهر سبب لفشل شهادة Let's Encrypt على OCI:
+> اللوحة تقول إن `80` مفتوح، والخادم يرفض الاتصال بصمت.
+>
+> **افحص أيّ جدار يعمل فعلاً قبل أن تلمس شيئاً:**
+>
+> ```bash
+> sudo ufw status 2>/dev/null
+> sudo iptables -L INPUT -n --line-numbers
+> ```
+
+### الحالة أ — `ufw` نشط (`Status: active`)
 
 ```bash
 sudo ufw allow OpenSSH
 sudo ufw allow 80/tcp
 sudo ufw allow 443/tcp
-sudo ufw enable
+sudo ufw reload
 ```
 
-**تحقّق:** لا يجب أن يظهر المنفذ 4000 في القائمة.
+### الحالة ب — `ufw` غير نشط وقواعد `iptables` موجودة (الشائع على OCI)
+
+انظر إلى ترقيم القواعد من `iptables -L INPUT -n --line-numbers`: ستجد قاعدة
+`REJECT` قرب النهاية. أدرج المنفذين **قبلها** — الإضافة بعدها بلا أثر:
 
 ```bash
-sudo ufw status
+# بدّل 6 برقم سطر قاعدة REJECT من المخرجات أعلاه
+sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 80 -j ACCEPT
+sudo iptables -I INPUT 7 -m state --state NEW -p tcp --dport 443 -j ACCEPT
+
+# بلا هذا تضيع القواعد عند إعادة التشغيل
+sudo netfilter-persistent save
 ```
+
+> **لا تشغّل `ufw enable` على خادم OCI فيه قواعد iptables مسبقة** — الاثنان
+> يتنازعان على نفس السلاسل، والنتيجة الشائعة قطع جلسة SSH الحالية. اختر واحداً.
+
+### تحقّق — ولا بدّ أن يكون من خارج الخادم
+
+```bash
+sudo ss -lntp | grep -E ':(80|443|4000)\b'
+```
+
+المتوقّع: `80` و `443` على Caddy (بعد الخطوة 9)، و `4000` على `127.0.0.1`
+حصراً — إن رأيت `0.0.0.0:4000` فالمفتاح `HOST` غير مضبوط.
+
+ثم من جهازك أنت، أو من بيانات هاتفك الجوّال:
+
+```bash
+curl -sI http://9ri3a.centrefocus.ma/
+```
+
+فحص المنفذ من داخل الخادم بـ `curl localhost` لا يثبت شيئاً — Let's Encrypt
+تتصل من الخارج.
+
+### قبل الخطوة 9: تأكّد أن المنفذ 80 فارغ
+
+```bash
+sudo ss -lntp | grep -E ':(80|443)\b'
+```
+
+إن كان nginx أو Apache يستمع عليهما أصلاً، فـ Caddy لن يستطيع الارتباط.
+إمّا توقفهما، أو استعمل مسار nginx في `deploy/nginx/qri3a-api.conf` بدل Caddy.
 
 ---
 
@@ -462,7 +516,10 @@ sudo -u postgres pg_dump -n commerce اسم_قاعدتك | gzip > commerce-$(dat
 | التطبيق يعرض كتالوجاً فارغاً | كل المنتجات ضمن `PRODUCT_HIDDEN_STATUSES` | `SELECT status, count(*) FROM public.products GROUP BY status;` ثم عدّل القائمة |
 | الدفع يردّ `503` | مفاتيح CMI فارغة | الخطوة 11 |
 | Caddy لا يستخرج شهادة | الاسم لا يشير إلى السيرفر، أو المنفذ 80 محجوب | `dig +short <اسمك>` و `sudo ufw status` |
-| المنفذ 80 يبدو مفتوحاً محلياً لكن الشهادة تفشل | مزوّد الإنترنت أو جدار ناري خارجي يحجب الوارد على 80 | اختبره من خارج الشبكة، لا من السيرفر: `curl -sI http://<اسمك>/` من هاتفك على بيانات الجوّال. Let's Encrypt تتصل من الخارج |
+| المنفذ 80 يبدو مفتوحاً في لوحة Oracle لكن الشهادة تفشل | قواعد `iptables` المسبقة على صورة OCI تحجبه — الـ Security List ليست الجدار الوحيد | الخطوة 8، الحالة ب |
+| قاعدة `iptables` أُضيفت لكن بلا أثر | أُدرجت **بعد** قاعدة `REJECT` | `sudo iptables -L INPUT -n --line-numbers` ثم أعد الإدراج قبل رقم سطر `REJECT` |
+| القواعد تضيع بعد إعادة تشغيل الخادم | لم تُحفظ | `sudo netfilter-persistent save` |
+| ‏`Caddy` يفشل في الارتباط بالمنفذ 80 | nginx أو Apache يستمع عليه أصلاً | `sudo ss -lntp \| grep :80` — أوقفه أو استعمل مسار nginx |
 | `deploy.sh` يقول `uncommitted changes` | ملف عُدّل يدوياً على السيرفر | `git diff` لرؤيته، ثم `git checkout -- <الملف>` |
 | `migrations … contents changed` | ترحيلة مطبَّقة تغيّر محتواها | انظر أسفله |
 
