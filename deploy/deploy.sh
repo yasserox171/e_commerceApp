@@ -132,8 +132,11 @@ step "Installing dependencies"
 
 # Only the API workspace. The two Expo apps and shared-ui are built by CI into
 # APKs and have no business pulling ~1GB of native tooling onto a small VPS.
-# Dev dependencies are needed: TypeScript compiles the sources in the next step.
-npm ci --workspace @ecommerce/api --include-workspace-root
+#
+# --include=dev is not redundant: npm drops the *selected workspace's* dev
+# dependencies when --workspace is given, so without it TypeScript and every
+# @types package are missing and the build below fails on implicit any.
+npm ci --workspace @ecommerce/api --include-workspace-root --include=dev
 ok "node_modules installed"
 
 # --- build -------------------------------------------------------------------
